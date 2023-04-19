@@ -10,8 +10,11 @@
 import requests as re
 import json
 import pandas as pd
+import datetime as dt
 import os
 from openpyxl import load_workbook
+
+pd.options.mode.chained_assignment = None
 
 # API URL Endpoint
 apiEndPoint = "https://api.worldaquatics.com/fina/rankings/swimming/report/csv"
@@ -94,12 +97,13 @@ def callAPI():
 
 # Compile CSV into one excel file
 def compileCSV():
-    writer = pd.ExcelWriter(excelFileName)
+    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
     df = pd.DataFrame()
     for i in range(len(csv)):
         df_csv = pd.read_csv(csv[i])
         df = pd.concat([df, df_csv], axis=0)
     df.drop(df[df['meet_name'] == "meet_name"].index, inplace=True)
+    df['swim_date'] = pd.to_datetime(df['swim_date'], format='%d/%m/%Y').dt.date
     df.to_excel(writer, sheet_name="RAW", index=False)
     writer.save()
 
@@ -113,25 +117,34 @@ def deleteCSVs():
 # Filter RAW Data by Athlete Name defined in namelist.csv
 def filterNames():
     df_filtered = pd.DataFrame()
-    writer = pd.ExcelWriter(excelFileName)
     df = pd.read_excel(excelFileName)
+    wb = load_workbook(excelFileName)
+    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
+    writer.book = wb
     df_namelist = pd.read_csv('namelist.csv', header=None)
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
             df_filtered = pd.concat(
                 [df_filtered, df[df['full_name_computed'] == df_namelist.at[i, j]]])
-    df.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
+    df_filtered.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
+    df_filtered2022to2023 = df_filtered[
+        (df_filtered['swim_date'].dt.year == 2022) | (
+            df_filtered['swim_date'].dt.year == 2023)
+    ]
+    df_filtered2022to2023.to_excel(writer, sheet_name="Competitors 2022-2023", index=False)
+    df_filtered2023 = df_filtered[df_filtered['swim_date'].dt.year == 2023]
+    df_filtered2023.to_excel(writer, sheet_name="Competitors 2023", index=False)
     writer.save()
 
 
 def main():
-    # print(" ".join(["Getting results for:", gender, distance, stroke]))
-    # print("Countries: " + ", ".join(countries_list))
-    # getCountryID()
-    # callAPI()
-    # compileCSV()
-    # deleteCSVs()
-    # print("Results downloaded and compiled succesfully!")
+    print(" ".join(["Getting results for:", gender, distance, stroke]))
+    print("Countries: " + ", ".join(countries_list))
+    getCountryID()
+    callAPI()
+    compileCSV()
+    deleteCSVs()
+    print("Results downloaded and compiled succesfully!")
     filterNames()
 
 
