@@ -5,6 +5,11 @@ CSVs will be downloaded and be compiled into one Excel file based on user specif
 
 <hr>
 
+## **Requirements (Installation)**
+
+<pre><code>https://api.worldaquatics.com/fina/rankings/swimming/report/csv</code></pre>
+<hr>
+
 ## **API Endpoint**
 
 API Endpoint is:
