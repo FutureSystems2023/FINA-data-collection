@@ -7,7 +7,9 @@ CSVs will be downloaded and be compiled into one Excel file based on user specif
 
 ## **Requirements (Installation)**
 
-<pre><code>https://api.worldaquatics.com/fina/rankings/swimming/report/csv</code></pre>
+Change into current directory and run pip to install required packages using the following command
+
+<pre><code>pip install requirements.txt</code></pre>
 <hr>
 
 ## **API Endpoint**
