@@ -11,6 +11,7 @@ import requests as re
 import json
 import pandas as pd
 import os
+from openpyxl import load_workbook
 
 # API URL Endpoint
 apiEndPoint = "https://api.worldaquatics.com/fina/rankings/swimming/report/csv"
@@ -45,6 +46,8 @@ gender_full = ""
 excelFileName = " ".join([gender, distance, stroke]) + ".xlsx"
 
 # Read Countries.json File to obtain country ID
+
+
 def getCountryID():
     with open("countries.json") as countries_json:
         file_contents = countries_json.read()
@@ -97,7 +100,7 @@ def compileCSV():
         df_csv = pd.read_csv(csv[i])
         df = pd.concat([df, df_csv], axis=0)
     df.drop(df[df['meet_name'] == "meet_name"].index, inplace=True)
-    df.to_excel(writer,sheet_name="RAW", index=False)
+    df.to_excel(writer, sheet_name="RAW", index=False)
     writer.save()
 
 
@@ -109,27 +112,27 @@ def deleteCSVs():
 
 # Filter RAW Data by Athlete Name defined in namelist.csv
 def filterNames():
+    df_filtered = pd.DataFrame()
     writer = pd.ExcelWriter(excelFileName)
     df = pd.read_excel(excelFileName)
-    df_namelist = pd.read_csv('namelist.csv',header=None)
-    df_filtered = pd.DataFrame()
+    df_namelist = pd.read_csv('namelist.csv', header=None)
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
-            df_filtered = pd.concat([df_filtered, df[df['full_name_computed'] == df_namelist.at[i, j]]])
-    df.to_excel(writer,sheet_name="Competitors 2019-2023", index=False)
+            df_filtered = pd.concat(
+                [df_filtered, df[df['full_name_computed'] == df_namelist.at[i, j]]])
+    df.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
     writer.save()
 
 
 def main():
-    '''
-    print(" ".join(["Getting results for:", gender, distance, stroke]))
-    print("Countries: " + ", ".join(countries_list))
-    getCountryID()
-    callAPI()
-    compileCSV()
-    deleteCSVs()
-    print("Results downloaded and compiled succesfully!")
-    '''
+    # print(" ".join(["Getting results for:", gender, distance, stroke]))
+    # print("Countries: " + ", ".join(countries_list))
+    # getCountryID()
+    # callAPI()
+    # compileCSV()
+    # deleteCSVs()
+    # print("Results downloaded and compiled succesfully!")
     filterNames()
+
 
 main()
