@@ -13,45 +13,59 @@ import datetime as dt
 import os
 from openpyxl import load_workbook
 from urllib.parse import unquote
+import config
 
 pd.options.mode.chained_assignment = None
 
-# API URL Endpoint
-apiEndPoint = "https://api.worldaquatics.com/fina/rankings/swimming/report/csv"
 
-# Parameters for requests
-distance = "200"  # e.g. (50, 100, 200, 400, 800, 1500) Change as appropriate
-gender = "F"  # e.g. (M or F) Change as appropriate
-stroke = "FREESTYLE"  # e.g. (FREESTYLE, FREESTYLE_RELAY) Change as appropriate
-poolConfiguration = "LCM"
-year = ""  # year leave blank if filtering by date
-startDate = "01%2F01%2F2019"
-endDate = "05%2F05%2F2023"
-timesMode = "ALL_TIMES"
-pageSize = "200"
-countryId = ""
+class API():
 
-# Define Countries to get results from
-countries_list = [
-    "Singapore",
-    "Philippines",
-    "Malaysia",
-    "Vietnam",
-    "Indonesia",
-    "Thailand",
-    "Myanmar"
-]
+    # API URL Endpoint
+    f = open('api.json')
+    data = json.load(f)
+    apiEndPoint = data['apiEndPoint']
+    headers = {
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+        'User-Agent': 'PostmanRuntime/7.29.2',
+        'Accept-Encoding': 'gzip, deflate, br',
+    }
+
+    def __str__(self):
+        return f"API Endpoint: {self.apiEndPoint}"
+
+    def fetch_data(self, countryId):
+        r = re.get(
+            url=self.apiEndPoint,
+            headers=self.headers,
+            params={
+                "distance": config.distance,
+                "gender": config.gender,
+                "stroke": config.stroke,
+                "poolConfiguration": config.poolConfiguration,
+                "year": config.year,
+                "startDate": config.startDate,
+                "endDate": config.endDate,
+                "timesMode": config.timesMode,
+                "pageSize": config.pageSize,
+                "countryId": countryId,
+            },
+            allow_redirects=True,
+        )
+        return r
+
 
 # Declaration of Variables for looping
+countries_list = config.countries_list
 countryId_list = []
 csv = []
 gender_full = ""
-excelFileName = " ".join([gender, distance, stroke]) + ".xlsx"
+excelFileName = " ".join([config.gender, config.distance, config.stroke]) + ".xlsx"
+
 
 # Read Countries.json File to obtain country ID
-
-
 def getCountryID():
+    print("Countries: " + ", ".join(countries_list))
     with open("countries.json") as countries_json:
         file_contents = countries_json.read()
 
@@ -65,24 +79,14 @@ def getCountryID():
 
 # Loop through each country and call API with params
 def callAPI():
+    print("Downloading data using API...")
     for i in range(len(countryId_list)):
-        countryId = countryId_list[i]
-        r = re.get(
-            apiEndPoint,
-            params={
-                "distance": distance,
-                "gender": gender,
-                "stroke": stroke,
-                "poolConfiguration": poolConfiguration,
-                "year": year,
-                "startDate": startDate,
-                "endDate": endDate,
-                "timesMode": timesMode,
-                "pageSize": pageSize,
-                "countryId": countryId,
-            },
-            allow_redirects=True,
-        )
+        r = API().fetch_data(countryId_list[i])
+
+        if r.status_code != 200:
+            print("Failed calling API!")
+            print(r.text)
+            exit
         if countries_list[i] == "Democratic Republic of Timor - Leste":
             filename = "East Timor"
         elif countries_list[i] == "Lao People's Democratic Republic":
@@ -91,21 +95,27 @@ def callAPI():
             filename = "Brunei"
         else:
             filename = countries_list[i]
+
         csv.append(filename + ".csv")
         open(filename + ".csv", "wb").write(r.content)
 
 
 # Compile CSV into one excel file
 def compileCSV():
-    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
+    print("Compiling data...")
     df = pd.DataFrame()
+    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
+
     for i in range(len(csv)):
         df_csv = pd.read_csv(csv[i])
+        if len(df_csv) == 0:
+            print("API returned no results found for", countries_list[i])
         df = pd.concat([df, df_csv], axis=0)
+
     df.drop(df[df['meet_name'] == "meet_name"].index, inplace=True)
     df['swim_date'] = pd.to_datetime(df['swim_date'], format='%d/%m/%Y').dt.date
     df.to_excel(writer, sheet_name="RAW", index=False)
-    writer.save()
+    writer.close()
 
 
 # Delete CSVs after Compilation
@@ -116,37 +126,36 @@ def deleteCSVs():
 
 # Filter RAW Data by Athlete Name defined in namelist.csv
 def filterNames():
+    print("Begin filtering data using namelist.csv...")
     df_filtered = pd.DataFrame()
-    df = pd.read_excel(excelFileName)
-    wb = load_workbook(excelFileName)
-    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
-    writer.book = wb
+    df = pd.read_excel(excelFileName, sheet_name='RAW')
     df_namelist = pd.read_csv('namelist.csv', header=None)
+    writer = pd.ExcelWriter(excelFileName, mode='a', engine='openpyxl')
+
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
             df_filtered = pd.concat(
                 [df_filtered, df[df['full_name_computed'] == df_namelist.at[i, j]]])
     df_filtered.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
+
     df_filtered2022to2023 = df_filtered[
         (df_filtered['swim_date'].dt.year == 2022) | (
             df_filtered['swim_date'].dt.year == 2023)
     ]
     df_filtered2022to2023.to_excel(writer, sheet_name="Competitors 2022-2023", index=False)
+
     df_filtered2023 = df_filtered[df_filtered['swim_date'].dt.year == 2023]
     df_filtered2023.to_excel(writer, sheet_name="Competitors 2023", index=False)
     writer.save()
 
 
 def main():
-    print(" ".join(["Getting results for:", gender, distance, stroke, "(" + unquote(startDate), "to", unquote(endDate) + ")"]))
-    print("Countries: " + ", ".join(countries_list))
-    print("Downloading data using API...")
+    print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
+          "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
     getCountryID()
     callAPI()
-    print("Compiling data...")
     compileCSV()
     deleteCSVs()
-    print("Begin filtering data using namelist.csv...")
     filterNames()
     print("Script ran successfully!")
 
