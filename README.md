@@ -9,7 +9,7 @@ CSVs will be downloaded and be compiled into one Excel file based on user specif
 
 Change into current directory and run pip to install required packages using the following command
 
-<pre><code>pip install requirements.txt</code></pre>
+<pre><code>pip install -r requirements.txt</code></pre>
 <hr>
 
 ## **API Endpoint**
