@@ -53,7 +53,7 @@ countries_list = config.countries_list
 countryId_list = []
 csv = []
 gender_full = ""
-excelFileName = " ".join([config.gender, config.distance, config.stroke]) + ".xlsx"
+outputExcelFileName = " ".join([config.gender, config.distance, config.stroke]) + ".xlsx"
 
 
 # Read Countries.json File to obtain country ID
@@ -97,7 +97,7 @@ def callAPI():
 def compileCSV():
     print("Compiling data...")
     df = pd.DataFrame()
-    writer = pd.ExcelWriter(excelFileName, engine='openpyxl')
+    writer = pd.ExcelWriter(outputExcelFileName, engine='openpyxl')
 
     for i in range(len(csv)):
         df_csv = pd.read_csv(csv[i])
@@ -107,30 +107,53 @@ def compileCSV():
 
     df.drop(df[df['meet_name'] == "meet_name"].index, inplace=True)
     df['swim_date'] = pd.to_datetime(df['swim_date'], format='%d/%m/%Y').dt.date
-    convertTimestampToSeconds(df)
     df.to_excel(writer, sheet_name="RAW", index=False)
     writer.close()
 
 
-def convertTimestampToSeconds():
-    # Do something
-    return
-
 # Delete CSVs after Compilation
-
-
 def deleteCSVs():
     for i in range(len(csv)):
-        os.remove(csv[i])
+        try:
+            os.remove(csv[i])
+        except Exception as e:
+            print(e)
 
 
-# Filter RAW Data by Athlete Name defined in namelist.csv
-def filterNames():
+def cleanResults():
+    print("Commencing data cleaning operations...")
+    df = pd.read_excel(outputExcelFileName, sheet_name="RAW")
+    df['swim_time'] = df['swim_time'].apply(lambda x: convertStrToSeconds(x))
+    writer = pd.ExcelWriter(outputExcelFileName, mode='a', engine='openpyxl')
+    df.to_excel(writer, sheet_name="CLEANED", index=False)
+    writer.close()
+    return
+
+
+def convertStrToSeconds(x):
+    # HH:MM:SS or HH:MM:SS.ms
+    if x.count(":") == 2:
+        colonIndex_1st = x.find(":")
+        colonIndex_2nd = x.rfind(":")
+        seconds = float(x[0:colonIndex_1st]) * 3600 + float(x[colonIndex_1st + 1:colonIndex_2nd]) * 60 + float(x[colonIndex_2nd + 1:])
+    # MM:SS or MM:SS:ms
+    elif x.count(":") == 1:
+        colonIndex = x.find(":")
+        seconds = float(x[0:colonIndex]) * 60 + float(x[colonIndex + 1:])
+    return seconds
+
+
+# Filter RAW Data by Athlete Name defined in namelist.csv and seprate into different sheets by year (2019-2023, 2022-2023 & 2023)
+def filterNames(targetFileName=outputExcelFileName):
     print("Begin filtering data using namelist.csv...")
     df_filtered = pd.DataFrame()
-    df = pd.read_excel(excelFileName, sheet_name='RAW')
-    df_namelist = pd.read_csv('namelist.csv', header=None)
-    writer = pd.ExcelWriter(excelFileName, mode='a', engine='openpyxl')
+    try:
+        df = pd.read_excel(targetFileName, sheet_name='CLEANED')
+        df_namelist = pd.read_csv('namelist.csv', header=None)
+    except Exception as e:
+        print(e)
+        quit()
+    writer = pd.ExcelWriter(outputExcelFileName, mode='a', engine='openpyxl')
 
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
@@ -146,19 +169,34 @@ def filterNames():
 
     df_filtered2023 = df_filtered[df_filtered['swim_date'].dt.year == 2023]
     df_filtered2023.to_excel(writer, sheet_name="Competitors 2023", index=False)
-    writer.save()
+    writer.close()
 
 
 def parseScriptArguments():
     description = "This is a python script to automate data collection and cleaning of FINA's results retrieved from FINA website's backend API."
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("-scrapeonly", "--ScrapeOnly", action='store_true',
+                        help="Passing this argument will only run scrapping but not filter scrapped and cleaned data by namelist.csv.")
     parser.add_argument("-filteronly", "--FilterOnly", action='store_true',
-                        help="Filter existing cleanedResults.csv by discipline specified. Scrapping will not be performed prior.")
+                        help="Passing this argument will not run scrapping but only filter existing cleaned data by namelist.csv.")
+    parser.add_argument("-t", "--TargetFileName", help="Define Output file name of Scrapped Results (without '.xlsx' extension)")
     args = parser.parse_args()
 
-    if args.FilterOnly:
-        filterNames()
+    if args.ScrapeOnly:
+        print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
+                        "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
+        getCountryID()
+        callAPI()
+        compileCSV()
+        deleteCSVs()
+        cleanResults()
         print("Script ran successfully!")
+    elif args.FilterOnly:
+        if args.TargetFileName:
+            filterNames(args.TargetFileName)
+            print("Script ran successfully!")
+        else:
+            print("Please provide target excel file name for filtering operations.")
     else:
         print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
                         "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
@@ -166,6 +204,7 @@ def parseScriptArguments():
         callAPI()
         compileCSV()
         deleteCSVs()
+        cleanResults()
         filterNames()
         print("Script ran successfully!")
     return
@@ -177,4 +216,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # convertTimestampToSeconds()
