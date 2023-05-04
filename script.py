@@ -1,11 +1,3 @@
-"""
-# This script is to automate downloads of csv data files of swimming results from fina.org website
-# API Url is as follow:
-#   https://api.worldaquatics.com/fina/rankings/swimming/report/csv
-# Parameters are as follows:
-#   gender=F&distance=50&stroke=FREESTYLE&poolConfiguration=LCM&year=&startDate=01%2F01%2F2019&endDate=12%2F31%2F2022&timesMode=ALL_TIMES&regionId=&pageSize=200
-"""
-
 import requests as re
 import json
 import pandas as pd

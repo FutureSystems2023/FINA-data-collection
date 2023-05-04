@@ -1,7 +1,7 @@
 # **Documentation**
 
-This python script is to automate the results collection from <a href="fina.org">Fina website</a>.
-CSVs will be downloaded and be compiled into one Excel file based on user specified parameters.
+This python script is to automate the results collection from <a href="fina.org">FINA website</a>. The [website's API](#api-endpoint) will be called and
+CSVs of results will be downloaded based on user specified parameters in [config.py](config.py). Next, the raw data will then be filtered based on [namelist.csv](namelist.csv) and be compiled into one Excel file (.xlsx). This final excel file will have 4 sheets (RAW, Competitors 2019-2023, Competitors 2022-2023 & Competitors 2023) and will be named in this convention "GENDER DISTANCE STROKE.xlsx" (e.g. "F 200 FREESTYLE.xlsx").
 
 <hr>
 
@@ -10,6 +10,13 @@ CSVs will be downloaded and be compiled into one Excel file based on user specif
 Change into current directory and run pip to install required packages using the following command
 
 <pre><code>pip install -r requirements.txt</code></pre>
+<hr>
+
+## **Running the Script**
+
+Use the following command to run the script
+
+<pre><code>python ./script.py</code></pre>
 <hr>
 
 ## **API Endpoint**
@@ -53,7 +60,7 @@ API Endpoint is:
 
 ### **Changing Parameters**
 
-Edit the parameters in the following code block in [script.py](script.py) line 18
+Edit the parameters in the following code block in [config.py](config.py).
 
 <pre>
     <code>
@@ -75,7 +82,7 @@ Edit the parameters in the following code block in [script.py](script.py) line 1
 
 ### **Changing Countries**
 
-Edit the countries that you would like to get results for in the following code block in [script.py](script.py) line 30. Ensure that country name is the same as that defined in fina website.
+Edit the countries that you would like to get results for in the following code block in [config.py](config.py). Ensure that country name is the same as that defined in fina website.
 
 <pre>
     <code>
@@ -95,3 +102,9 @@ Edit the countries that you would like to get results for in the following code 
         ]
     </code>
 </pre>
+
+<br/>
+
+### **Changing Athlete Names**
+
+Edit the athlete names that you would like to get results for in [namelist.csv](namelist.csv). Ensure that athlete name provided is the same as that defined in fina website. This can be done by performing a quick search/lookup [here](https://www.worldaquatics.com/athletes).
