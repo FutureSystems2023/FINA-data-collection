@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import datetime as dt
 import os
+import argparse
 from openpyxl import load_workbook
 from urllib.parse import unquote
 import config
@@ -106,11 +107,18 @@ def compileCSV():
 
     df.drop(df[df['meet_name'] == "meet_name"].index, inplace=True)
     df['swim_date'] = pd.to_datetime(df['swim_date'], format='%d/%m/%Y').dt.date
+    convertTimestampToSeconds(df)
     df.to_excel(writer, sheet_name="RAW", index=False)
     writer.close()
 
 
+def convertTimestampToSeconds():
+    # Do something
+    return
+
 # Delete CSVs after Compilation
+
+
 def deleteCSVs():
     for i in range(len(csv)):
         os.remove(csv[i])
@@ -141,15 +149,32 @@ def filterNames():
     writer.save()
 
 
+def parseScriptArguments():
+    description = "This is a python script to automate data collection and cleaning of FINA's results retrieved from FINA website's backend API."
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("-filteronly", "--FilterOnly", action='store_true',
+                        help="Filter existing cleanedResults.csv by discipline specified. Scrapping will not be performed prior.")
+    args = parser.parse_args()
+
+    if args.FilterOnly:
+        filterNames()
+        print("Script ran successfully!")
+    else:
+        print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
+                        "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
+        getCountryID()
+        callAPI()
+        compileCSV()
+        deleteCSVs()
+        filterNames()
+        print("Script ran successfully!")
+    return
+
+
 def main():
-    print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
-          "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
-    getCountryID()
-    callAPI()
-    compileCSV()
-    deleteCSVs()
-    filterNames()
-    print("Script ran successfully!")
+    parseScriptArguments()
 
 
-main()
+if __name__ == "__main__":
+    main()
+    # convertTimestampToSeconds()
