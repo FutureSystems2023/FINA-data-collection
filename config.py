@@ -1,5 +1,5 @@
 # Parameters for requests
-distance = "200"  # e.g. (50, 100, 200, 400, 800, 1500) Change as appropriate
+distance = "100"  # e.g. (50, 100, 200, 400, 800, 1500) Change as appropriate
 gender = "F"  # e.g. (M or F) Change as appropriate
 stroke = "FREESTYLE"  # e.g. (FREESTYLE, FREESTYLE_RELAY) Change as appropriate
 poolConfiguration = "LCM"
