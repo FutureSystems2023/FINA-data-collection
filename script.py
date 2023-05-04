@@ -132,17 +132,21 @@ def cleanResults():
 
 def convertStrToSeconds(x):
     # Data type is float (already in seconds, no conversion needed)
-    if isinstance(x, float):
+    if isinstance(x, str):
+        # HH:MM:SS or HH:MM:SS.ms
+        if x.count(":") == 2:
+            colonIndex_1st = x.find(":")
+            colonIndex_2nd = x.rfind(":")
+            seconds = float(x[0:colonIndex_1st]) * 3600 + float(x[colonIndex_1st + 1:colonIndex_2nd]) * 60 + float(x[colonIndex_2nd + 1:])
+        # MM:SS or MM:SS:ms
+        elif x.count(":") == 1:
+            colonIndex = x.find(":")
+            seconds = float(x[0:colonIndex]) * 60 + float(x[colonIndex + 1:])
+        else:
+            seconds = float(x)
+    elif isinstance(x, int) or isinstance(x, float):
         seconds = x
-    # HH:MM:SS or HH:MM:SS.ms
-    elif x.count(":") == 2:
-        colonIndex_1st = x.find(":")
-        colonIndex_2nd = x.rfind(":")
-        seconds = float(x[0:colonIndex_1st]) * 3600 + float(x[colonIndex_1st + 1:colonIndex_2nd]) * 60 + float(x[colonIndex_2nd + 1:])
-    # MM:SS or MM:SS:ms
-    elif x.count(":") == 1:
-        colonIndex = x.find(":")
-        seconds = float(x[0:colonIndex]) * 60 + float(x[colonIndex + 1:])
+
     return seconds
 
 
