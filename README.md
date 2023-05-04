@@ -46,7 +46,7 @@ API Endpoint is:
 
 ### **Whereby:**
 
-- **distance** = Distance in metres [e.g. (50, 100, 200, 400, 800, 1500)]
+- **distance** = Distance in metres [e.g. (50, 100, 200, 400, 800, 1500). Note for relays (e.g. 4x100, 4x200), leave as 100 or 200]
 - **gender** = M is Men, F is Women [e.g. (M or F)]
 - **stroke** = Stroke or Style <u>in CAPS</u> [e.g. (FREESTYLE, FREESTYLE_RELAY, BACKSTROKE, BUTTERFLY, MEDLEY)]
 - **poolConfiguration** = Pool configuration/length [e.g. LCM or SCM (LCM is 50m, SCM is 25m)]
