@@ -145,7 +145,7 @@ def convertStrToSeconds(x):
         else:
             seconds = float(x)
     elif isinstance(x, int) or isinstance(x, float):
-        seconds = x
+        seconds = float(x)
 
     return seconds
 
