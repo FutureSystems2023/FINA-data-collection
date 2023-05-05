@@ -160,7 +160,7 @@ def filterNames(targetFileName=outputExcelFileName):
     except Exception as e:
         print(e)
         quit()
-    writer = pd.ExcelWriter(outputExcelFileName, mode='a', engine='openpyxl')
+    writer = pd.ExcelWriter(targetFileName, mode='a', engine='openpyxl')
 
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
@@ -186,7 +186,8 @@ def parseScriptArguments():
                         help="Passing this argument will only run scrapping but not filter scrapped and cleaned data by namelist.csv.")
     parser.add_argument("-filteronly", "--FilterOnly", action='store_true',
                         help="Passing this argument will not run scrapping but only filter existing cleaned data by namelist.csv.")
-    parser.add_argument("-t", "--TargetFileName", help="Define Output file name of Scrapped Results (without '.xlsx' extension)")
+    parser.add_argument("-t", "--TargetFileName",
+                        help="Define target excel file name for filtering operations (with '.xlsx' extension). Default filename is defined in config.py.")
     args = parser.parse_args()
 
     if args.ScrapeOnly:
@@ -200,7 +201,7 @@ def parseScriptArguments():
         print("Script ran successfully!")
     elif args.FilterOnly:
         if args.TargetFileName:
-            filterNames(args.TargetFileName)
+            filterNames(targetFileName=args.TargetFileName)
             print("Script ran successfully!")
         else:
             print("Please provide target excel file name for filtering operations.")
