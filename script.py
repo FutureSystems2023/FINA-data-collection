@@ -151,12 +151,12 @@ def convertStrToSeconds(x):
 
 
 # Filter RAW Data by Athlete Name defined in namelist.csv and seprate into different sheets by year (2019-2023, 2022-2023 & 2023)
-def filterNames(targetFileName=outputExcelFileName):
-    print("Begin filtering data using namelist.csv...")
+def filterNames(targetFileName=outputExcelFileName, namelistCSV="namelist.csv"):
+    print("Begin filtering data using {0}...".format(namelistCSV))
     df_filtered = pd.DataFrame()
     try:
         df = pd.read_excel(targetFileName, sheet_name='CLEANED')
-        df_namelist = pd.read_csv('namelist.csv', header=None)
+        df_namelist = pd.read_csv(namelistCSV)
     except Exception as e:
         print(e)
         quit()
@@ -165,7 +165,7 @@ def filterNames(targetFileName=outputExcelFileName):
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
             df_filtered = pd.concat(
-                [df_filtered, df[df['full_name_computed'] == df_namelist.at[i, j]]])
+                [df_filtered, df[df['full_name_computed'] == df_namelist.iat[i, j]]])
     df_filtered.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
 
     df_filtered2022to2023 = df_filtered[
@@ -185,9 +185,11 @@ def parseScriptArguments():
     parser.add_argument("-scrapeonly", "--ScrapeOnly", action='store_true',
                         help="Passing this argument will only run scrapping but not filter scrapped and cleaned data by namelist.csv.")
     parser.add_argument("-filteronly", "--FilterOnly", action='store_true',
-                        help="Passing this argument will not run scrapping but only filter existing cleaned data by namelist.csv.")
+                        help="No scrapping. Only filter existing cleaned data by name list provided in csv file. By default, when running -filteronly, script will look for namelist csv file that matches target excel file name (for example, if -t [--TargetFileName] is 'F 200 FREESTYLE.xlsx', the namelist csv file matched will be 'F 200 FREESTYLE namelist.csv'). However, if -n [--NameListCSV] argument is parsed, namelist csv will reference the namelist csv file specified in argument.")
     parser.add_argument("-t", "--TargetFileName",
-                        help="Define target excel file name for filtering operations (with '.xlsx' extension). Default filename is defined in config.py.")
+                        help="Define target excel file name for filtering operations (with '.xlsx' extension). Only works when -filteronly argument is parsed.")
+    parser.add_argument("-n", "--NameListCSV",
+                        help="Define namelist csv file name for filtering operations (with '.csv' extension). Only works when -filteronly argument is parsed.")
     args = parser.parse_args()
 
     if args.ScrapeOnly:
@@ -200,8 +202,13 @@ def parseScriptArguments():
         cleanResults()
         print("Script ran successfully!")
     elif args.FilterOnly:
+        if args.NameListCSV:
+            namelistCSV = args.NameListCSV
+        else:
+            namelistCSV = args.TargetFileName[:len(args.TargetFileName) - 5] + " namelist.csv"
+
         if args.TargetFileName:
-            filterNames(targetFileName=args.TargetFileName)
+            filterNames(targetFileName=args.TargetFileName, namelistCSV=namelistCSV)
             print("Script ran successfully!")
         else:
             print("Please provide target excel file name for filtering operations.")
