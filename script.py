@@ -4,12 +4,11 @@ import pandas as pd
 import datetime as dt
 import os
 import argparse
-from openpyxl import load_workbook
 from urllib.parse import unquote
 import config
 
 pd.options.mode.chained_assignment = None
-
+ 
 
 class API():
 
@@ -68,6 +67,7 @@ def getCountryID():
         for j in range(len(parsed_json)):
             if parsed_json[j]["Name"] == countries_list[i]:
                 countryId_list.append(parsed_json[j]["Id"])
+    return
 
 
 # Loop through each country and call API with params
@@ -91,6 +91,7 @@ def callAPI():
 
         csv.append(filename + ".csv")
         open(filename + ".csv", "wb").write(r.content)
+    return
 
 
 # Compile CSV into one excel file
@@ -109,6 +110,7 @@ def compileCSV():
     df['swim_date'] = pd.to_datetime(df['swim_date'], format='%d/%m/%Y').dt.date
     df.to_excel(writer, sheet_name="RAW", index=False)
     writer.close()
+    return
 
 
 # Delete CSVs after Compilation
@@ -118,6 +120,7 @@ def deleteCSVs():
             os.remove(csv[i])
         except Exception as e:
             print(e)
+    return
 
 
 def cleanResults():
@@ -177,6 +180,47 @@ def filterNames(targetFileName=outputExcelFileName, namelistCSV="namelist.csv"):
     df_filtered2023 = df_filtered[df_filtered['swim_date'].dt.year == 2023]
     df_filtered2023.to_excel(writer, sheet_name="Competitors 2023", index=False)
     writer.close()
+    return
+
+
+def scrapeOnlyOperation(**kwargs):
+    print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
+                    "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
+    getCountryID()
+    callAPI()
+    compileCSV()
+    deleteCSVs()
+    cleanResults()
+    return
+
+
+def filterOnlyOperation(**kwargs):
+    if kwargs['namelistCSV']:
+        namelistCSV = kwargs['namelistCSV']
+    elif kwargs['targetFileName']:
+        targetFileName = kwargs['targetFileName']
+        if os.path.isfile(targetFileName[:len(targetFileName) - 5] + " namelist.csv"):
+            namelistCSV = targetFileName[:len(targetFileName) - 5] + " namelist.csv"
+    else:
+        namelistCSV = "namelist.csv"
+
+    if kwargs['targetFileName']:
+        filterNames(targetFileName=kwargs['targetFileName'], namelistCSV=namelistCSV)
+    else:
+        print("Please provide target excel file name for filtering operations.")
+    return
+
+
+def normalOperation():
+    print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
+                    "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
+    getCountryID()
+    callAPI()
+    compileCSV()
+    deleteCSVs()
+    cleanResults()
+    filterNames()
+    return
 
 
 def parseScriptArguments():
@@ -193,40 +237,18 @@ def parseScriptArguments():
     args = parser.parse_args()
 
     if args.ScrapeOnly:
-        print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
-                        "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
-        getCountryID()
-        callAPI()
-        compileCSV()
-        deleteCSVs()
-        cleanResults()
-        print("Script ran successfully!")
+        scrapeOnlyOperation()
     elif args.FilterOnly:
-        if args.NameListCSV:
-            namelistCSV = args.NameListCSV
-        else:
-            namelistCSV = args.TargetFileName[:len(args.TargetFileName) - 5] + " namelist.csv"
-
-        if args.TargetFileName:
-            filterNames(targetFileName=args.TargetFileName, namelistCSV=namelistCSV)
-            print("Script ran successfully!")
-        else:
-            print("Please provide target excel file name for filtering operations.")
+        filterOnlyOperation(targetFileName=args.TargetFileName, namelistCSV=args.NameListCSV)
     else:
-        print(" ".join(["Getting results for:", config.gender, config.distance, config.stroke,
-                        "(" + unquote(config.startDate), "to", unquote(config.endDate) + ")"]))
-        getCountryID()
-        callAPI()
-        compileCSV()
-        deleteCSVs()
-        cleanResults()
-        filterNames()
-        print("Script ran successfully!")
+        normalOperation()
     return
 
 
 def main():
     parseScriptArguments()
+    print("Script ran successfully!")
+    return
 
 
 if __name__ == "__main__":
