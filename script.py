@@ -197,10 +197,6 @@ def scrapeOnlyOperation(**kwargs):
 def filterOnlyOperation(**kwargs):
     if kwargs['namelistCSV']:
         namelistCSV = kwargs['namelistCSV']
-    elif kwargs['targetFileName']:
-        targetFileName = kwargs['targetFileName']
-        if os.path.isfile(targetFileName[:len(targetFileName) - 5] + " namelist.csv"):
-            namelistCSV = targetFileName[:len(targetFileName) - 5] + " namelist.csv"
     else:
         namelistCSV = "namelist.csv"
 
@@ -232,7 +228,7 @@ def parseScriptArguments():
                         help="No scrapping. Only filter existing cleaned data by name list provided in csv file. By default, when running -filteronly, script will look for namelist csv file that matches target excel file name (for example, if -t [--TargetFileName] is 'F 200 FREESTYLE.xlsx', the namelist csv file matched will be 'F 200 FREESTYLE namelist.csv'). However, if -n [--NameListCSV] argument is parsed, namelist csv will reference the namelist csv file specified in argument.")
     parser.add_argument("-t", "--TargetFileName",
                         help="Define target excel file name for filtering operations (with '.xlsx' extension). Only works when -filteronly argument is parsed.")
-    parser.add_argument("-n", "--NameListCSV",
+    parser.add_argument("-n", "--NameListCSV", nargs='?', const="namelist.csv", type=str,
                         help="Define namelist csv file name for filtering operations (with '.csv' extension). Only works when -filteronly argument is parsed.")
     args = parser.parse_args()
 
