@@ -21,6 +21,8 @@ class API():
         'Content-Type': 'application/json',
         'User-Agent': 'PostmanRuntime/7.29.2',
         'Accept-Encoding': 'gzip, deflate, br',
+        'Origin': 'https://www.worldaquatics.com',
+        'Referer': 'https://www.worldaquatics.com/',
     }
 
     def __str__(self):

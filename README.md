@@ -107,4 +107,4 @@ Edit the countries that you would like to get results for in the following code 
 
 ### **Changing Athlete Names**
 
-Edit the athlete names that you would like to get results for in [namelist.csv](namelist.csv). Ensure that athlete name provided is the same as that defined in fina website. This can be done by performing a quick search/lookup [here](https://www.worldaquatics.com/athletes).
+Edit the athlete names that you would like to get results for in [namelist.csv](namelist.csv). Do <u>include a header</u> for the namelist.csv file (can be anything, for example "athlete_name"). Ensure that athlete name provided is the same as that defined in fina website. This can be done by performing a quick search/lookup [here](https://www.worldaquatics.com/athletes).
