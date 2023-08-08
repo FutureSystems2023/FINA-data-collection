@@ -76,6 +76,7 @@ def getCountryID():
 def callAPI():
     print("Downloading data using API...")
     for i in range(len(countryId_list)):
+        print("{} of {} - {}".format(str(i+1), str(len(countryId_list)), countries_list[i]))
         r = API().fetch_data(countryId_list[i])
 
         if r.status_code != 200:
@@ -88,6 +89,10 @@ def callAPI():
             filename = "Laos"
         elif countries_list[i] == "Brunei Darussalam":
             filename = "Brunei"
+        elif countries_list[i] == "Democratic People's Republic of Korea":
+            filename = "North Korea"
+        elif countries_list[i] == "People's Republic of China":
+            filename = "China"
         else:
             filename = countries_list[i]
 
@@ -103,6 +108,7 @@ def compileCSV():
     writer = pd.ExcelWriter(outputExcelFileName, engine='openpyxl')
 
     for i in range(len(csv)):
+        print(csv[i])
         df_csv = pd.read_csv(csv[i])
         if len(df_csv) == 0:
             print("API returned no results found for", countries_list[i])
