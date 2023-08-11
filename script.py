@@ -162,7 +162,7 @@ def convertStrToSeconds(x):
 
 
 # Filter RAW Data by Athlete Name defined in namelist.csv and seprate into different sheets by year (2019-2023, 2022-2023 & 2023)
-def filterNames(targetFileName=outputExcelFileName, namelistCSV="namelist.csv"):
+def filterNames(targetFileName=outputExcelFileName, namelistCSV="namelist.csv", medleyRelayEvent=False):
     print("Begin filtering data using {0}...".format(namelistCSV))
     df_filtered = pd.DataFrame()
     try:
@@ -175,8 +175,16 @@ def filterNames(targetFileName=outputExcelFileName, namelistCSV="namelist.csv"):
 
     for i in range(df_namelist.shape[0]):
         for j in range(df_namelist.shape[1]):
-            df_filtered = pd.concat(
-                [df_filtered, df[df['full_name_computed'] == df_namelist.iat[i, j]]])
+            if medleyRelayEvent:
+                df_filtered = pd.concat([
+                    df_filtered, 
+                    df[(df['full_name_computed'] == df_namelist.iat[i, j]) & (df['full_desc'].str.contains(df_namelist['stroke'][i], case=False))]
+                ])
+            else:
+                df_filtered = pd.concat([
+                    df_filtered, 
+                    df[df['full_name_computed'] == df_namelist.iat[i, j]]
+                ])
     df_filtered.to_excel(writer, sheet_name="Competitors 2019-2023", index=False)
 
     df_filtered2022to2023 = df_filtered[
@@ -209,7 +217,10 @@ def filterOnlyOperation(**kwargs):
         namelistCSV = "namelist.csv"
 
     if kwargs['targetFileName']:
-        filterNames(targetFileName=kwargs['targetFileName'], namelistCSV=namelistCSV)
+        if kwargs['medleyRelayEvent']:
+            filterNames(targetFileName=kwargs['targetFileName'], namelistCSV=namelistCSV, medleyRelayEvent= True)
+        else:
+            filterNames(targetFileName=kwargs['targetFileName'], namelistCSV=namelistCSV)
     else:
         print("Please provide target excel file name for filtering operations.")
     return
@@ -234,6 +245,8 @@ def parseScriptArguments():
                         help="Passing this argument will only run scrapping but not filter scrapped and cleaned data by namelist.csv.")
     parser.add_argument("-filteronly", "--FilterOnly", action='store_true',
                         help="No scrapping. Only filter existing cleaned data by name list provided in csv file. By default, when running -filteronly, script will look for namelist csv file that matches target excel file name (for example, if -t [--TargetFileName] is 'F 200 FREESTYLE.xlsx', the namelist csv file matched will be 'F 200 FREESTYLE namelist.csv'). However, if -n [--NameListCSV] argument is parsed, namelist csv will reference the namelist csv file specified in argument.")
+    parser.add_argument("-medleyrelay", "--MedleyRelayEvent", action='store_true',
+                        help="This argument defines if the event to be filtered is a medley relay event. If the argument is parsed, filter will be done based on both athlete name and stroke. Please make sure to define the stroke in namelist csv file. Only works when -filteronly argument is parsed.")
     parser.add_argument("-t", "--TargetFileName",
                         help="Define target excel file name for filtering operations (with '.xlsx' extension). Only works when -filteronly argument is parsed.")
     parser.add_argument("-n", "--NameListCSV", nargs='?', const="namelist.csv", type=str,
@@ -243,7 +256,7 @@ def parseScriptArguments():
     if args.ScrapeOnly:
         scrapeOnlyOperation()
     elif args.FilterOnly:
-        filterOnlyOperation(targetFileName=args.TargetFileName, namelistCSV=args.NameListCSV)
+        filterOnlyOperation(targetFileName=args.TargetFileName, namelistCSV=args.NameListCSV, medleyRelayEvent=args.MedleyRelayEvent)
     else:
         normalOperation()
     return
